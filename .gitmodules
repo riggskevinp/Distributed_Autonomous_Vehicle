@@ -1,0 +1,3 @@
+[submodule "ProtosExample"]
+	path = ProtosExample
+	url = git@github.com:riggskevinp/ProtosExample.git
