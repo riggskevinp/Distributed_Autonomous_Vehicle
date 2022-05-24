@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/Vehicle.qml</file>
+        <file>qml/VehicleMap.qml</file>
+        <file>images/airplane.png</file>
+        <file>qml/main.qml</file>
+        <file>qml/MqttClientView.qml</file>
+    </qresource>
+</RCC>
