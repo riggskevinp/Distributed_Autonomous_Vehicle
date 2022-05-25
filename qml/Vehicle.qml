@@ -13,13 +13,13 @@ MapQuickItem {
     Behavior on bearing {
         RotationAnimation {
             direction: RotationAnimation.Shortest
-            duration: 250
+            duration: 500
             easing.type: Easing.Linear
         }
     }
     Behavior on coordinate {
         CoordinateAnimation {
-            duration: 250
+            duration: 500
             easing.type: Easing.Linear
         }
     }

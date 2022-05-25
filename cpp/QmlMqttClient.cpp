@@ -27,5 +27,19 @@ QmlMqttSubscription::~QmlMqttSubscription()
 
 void QmlMqttSubscription::handleMessage(const QMqttMessage &qmsg)
 {
-    emit messageReceived(qmsg.payload());
+    auto topic = qmsg.topic().levels();
+    if(topic.length() >= 4){
+        auto machineName = topic.at(3);
+        auto loc = GnssLocation();
+        loc.ParseFromArray(qmsg.payload(), qmsg.payload().size());
+        emit messageReceived(machineName, QGeoCoordinate(loc.latitude(), loc.longitude()));
+    }
+}
+
+void QmlMqttSubscription::publishLocation(const QString &topic, const double lat, const double lon){
+    GnssLocation payload;
+    payload.set_latitude(lat);
+    payload.set_longitude(lon);
+    auto serialized_payload = QByteArray(payload.SerializeAsString().c_str(), payload.SerializeAsString().size());
+    client->publish(topic, serialized_payload);
 }

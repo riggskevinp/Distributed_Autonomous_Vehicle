@@ -4,6 +4,9 @@
 #include <QtCore/QMap>
 #include <QtMqtt/QMqttClient>
 #include <QtMqtt/QMqttSubscription>
+#include <QtPositioning>
+
+#include "machine.pb.h"
 
 class QmlMqttClient;
 
@@ -14,10 +17,11 @@ class QmlMqttSubscription : public QObject
 public:
     QmlMqttSubscription(QMqttSubscription *s, QmlMqttClient *c);
     ~QmlMqttSubscription();
+    Q_INVOKABLE void publishLocation(const QString &topic, const double lat, const double lon);
 
 Q_SIGNALS:
     void topicChanged(QString);
-    void messageReceived(const QString &msg);
+    void messageReceived(const QString &msg, const QGeoCoordinate& location);
 
 public slots:
     void handleMessage(const QMqttMessage &qmsg);
@@ -36,6 +40,7 @@ public:
     QmlMqttClient(QObject *parent = nullptr);
 
     Q_INVOKABLE QmlMqttSubscription *subscribe(const QString &topic);
+
 private:
     Q_DISABLE_COPY(QmlMqttClient)
 };

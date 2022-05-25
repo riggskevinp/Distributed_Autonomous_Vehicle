@@ -1,6 +1,7 @@
 import QtQuick 2.8
 import QtQuick.Controls 2.1
 import QtQuick.Layouts 1.1
+import QtPositioning 5.5
 import MqttClient 1.0
 import "."
 
@@ -10,7 +11,7 @@ Rectangle{
     anchors.top: jobSiteMap.bottom
     anchors.left: parent.left
     width: parent.width
-    height: parent.height / 4
+    height: parent.height / 3
     property var tempSubscription: 0
 
     MqttClient {
@@ -23,9 +24,11 @@ Rectangle{
         id: messageModel
     }
 
-    function addMessage(payload)
+    function addMessage(machineName, location)
     {
-        messageModel.insert(0, {"payload" : payload})
+
+        var msg = machineName + location.latitude.toString()
+        messageModel.insert(0, {"payload" : msg})
 
         if (messageModel.count >= 100)
             messageModel.remove(99)
@@ -33,7 +36,7 @@ Rectangle{
 
     GridLayout {
         anchors.fill: parent
-        anchors.margins: 10
+        anchors.margins: 0
         columns: 2
 
         Label {
@@ -85,12 +88,34 @@ Rectangle{
             Layout.fillWidth: true
 
             Label {
-                text: "Topic:"
+                text: "Organization:"
             }
 
             TextField {
-                id: subField
-                placeholderText: "<Subscription topic>"
+                id: organizationField
+                text: "Organization"
+                Layout.fillWidth: true
+                enabled: mqttview.tempSubscription === 0
+            }
+
+            Label {
+                text: "Job Site:"
+            }
+
+            TextField {
+                id: jobSiteField
+                text: "JobSite"
+                Layout.fillWidth: true
+                enabled: mqttview.tempSubscription === 0
+            }
+
+            Label {
+                text: "Session:"
+            }
+
+            TextField {
+                id: sessionField
+                text: "Session"
                 Layout.fillWidth: true
                 enabled: mqttview.tempSubscription === 0
             }
@@ -100,12 +125,103 @@ Rectangle{
                 text: "Subscribe"
                 visible: mqttview.tempSubscription === 0
                 onClicked: {
-                    if (subField.text.length === 0) {
+                    if (organizationField.text.length === 0 && jobSiteField.text.length === 0 && sessionField.text.length === 0) {
                         console.log("No topic specified to subscribe to.")
                         return
                     }
-                    mqttview.tempSubscription = client.subscribe(subField.text)
+                    var topic = organizationField.text + "/" + jobSiteField.text + "/" + sessionField.text + "/#"
+                    mqttview.tempSubscription = client.subscribe(topic)
                     mqttview.tempSubscription.messageReceived.connect(mqttview.addMessage)
+                    mqttview.tempSubscription.messageReceived.connect(jobSiteMap.updatePlane)
+                }
+            }
+        }
+
+        RowLayout {
+            enabled: client.state === MqttClient.Connected
+            Layout.columnSpan: 2
+            Layout.fillWidth: true
+
+            Label {
+                text: "Machine Name"
+            }
+
+            TextField {
+                id: machineNameField
+                text: "MachineA"
+                Layout.fillWidth: true
+                enabled: mqttview.tempSubscription !== 0
+            }
+
+            Label {
+                text: "Latitude:"
+            }
+
+            SpinBox {
+                id: latitudeField
+                property int inputScaleFactor: Math.pow(10, 7)
+                from: -90 * inputScaleFactor
+                to: 90 * inputScaleFactor
+                value: 42.567169  * inputScaleFactor
+                property int decimals: 8
+                property real realValue: value / inputScaleFactor
+                Layout.fillWidth: true
+                enabled: mqttview.tempSubscription !== 0
+
+                validator: DoubleValidator {
+                      bottom: Math.min(latitudeField.from, latitudeField.to)
+                      top:  Math.max(latitudeField.from, latitudeField.to)
+                }
+
+                textFromValue: function(value, locale) {
+                    return Number(value / inputScaleFactor).toLocaleString(locale, 'f', latitudeField.decimals)
+                }
+
+                valueFromText: function(text, locale) {
+                    return Number.fromLocaleString(locale, text) * inputScaleFactor
+                }
+            }
+
+            Label {
+                text: "Longitude:"
+            }
+
+            SpinBox {
+                id: longitudeField
+                property int inputScaleFactor: Math.pow(10, 7)
+                from: -180 * inputScaleFactor
+                to: 180 * inputScaleFactor
+                value: -90.688588 * inputScaleFactor
+                property int decimals: 8
+                property real realValue: value / inputScaleFactor
+                Layout.fillWidth: true
+                enabled: mqttview.tempSubscription !== 0
+
+                validator: DoubleValidator {
+                      bottom: Math.min(longitudeField.from, longitudeField.to)
+                      top:  Math.max(longitudeField.from, longitudeField.to)
+                }
+
+                textFromValue: function(value, locale) {
+                    return Number(value / inputScaleFactor).toLocaleString(locale, 'f', longitudeField.decimals)
+                }
+
+                valueFromText: function(text, locale) {
+                    return Number.fromLocaleString(locale, text) * inputScaleFactor
+                }
+            }
+
+            Button {
+                id: pubButton
+                text: "Publish"
+                enabled: mqttview.tempSubscription !== 0
+                onClicked: {
+                    if (organizationField.text.length === 0 && jobSiteField.text.length === 0 && sessionField.text.length === 0) {
+                        console.log("No topic specified to subscribe to.")
+                        return
+                    }
+                    var topic = organizationField.text + "/" + jobSiteField.text + "/" + sessionField.text + "/" + machineNameField.text
+                    mqttview.tempSubscription.publishLocation(topic, latitudeField.realValue, longitudeField.realValue)
                 }
             }
         }

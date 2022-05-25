@@ -25,6 +25,14 @@ conan_basic_setup(TARGETS)
 find_package(Protobuf REQUIRED)
 add_subdirectory(ProtosExample)
 
+message(STATUS "Protobuf locations")
+message(STATUS ${Protobuf_INCLUDE_DIRS})
+message(STATUS ${ProtobufMessagesIncludePath})
+message(STATUS ${PROTO_SRCS})
+message(STATUS ${PROTO_HDRS})
+
+include_directories(${CMAKE_BINARY_DIR} ${ProtobufMessagesIncludePath} ${Protobuf_INCLUDE_DIRS})
+
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -71,6 +79,6 @@ target_link_libraries(${PROJECT_NAME}
         CONAN_PKG::protobuf
 )
 
-include_directories(${CMAKE_BINARY_DIR} ${ProtobufMessagesIncludePath} ${Protobuf_INCLUDE_DIRS})
+
 
 

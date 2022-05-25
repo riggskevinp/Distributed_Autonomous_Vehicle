@@ -11,7 +11,8 @@ Map {
     anchors.left: parent.left
     width: parent.width
     height: parent.height * 3 / 4
-    center: QtPositioning.coordinate(55.75, 7.0)
+    center: QtPositioning.coordinate(42.567878, -90.688139)
+    zoomLevel: 16.0
     //anchors.fill: parent
     focus: true
     gesture.enabled: true
@@ -60,8 +61,8 @@ Map {
     }
 
     Component.onCompleted: {
-        jobSiteMap.addPlane("Tony", 0, oslo);
-        jobSiteMap.addPlane("Betsy", 0, london);
+        //jobSiteMap.addPlane("Tony", 0, oslo);
+        //jobSiteMap.addPlane("Betsy", 0, london);
         jobSiteMap.ready = true;
     }
 
@@ -80,20 +81,22 @@ Map {
 
         jobSiteMap.planes.push(plane);
         jobSiteMap.addMapItem(plane);
+        jobSiteMap.fitViewportToMapItems();
     }
 
-    function updatePlane(msg){
+    function updatePlane(machineName, loc){
         for(var i = 0; i < jobSiteMap.planes.length; i++){
-            if(jobSiteMap.planes[i].name !== msg.name){
+            if(jobSiteMap.planes[i].pilotName !== machineName){
                 continue;
             }
-            var coordinate = QtPositioning.coordinate(msg.lat, msg.lon);
-            var bearing = msg.bearing || jobSiteMap.planes[i].coordinate.azimuthTo(coordinate);
+            var coordinate = loc;
+            var bearing = loc.bearing || jobSiteMap.planes[i].coordinate.azimuthTo(coordinate);
 
             jobSiteMap.planes[i].coordinate = coordinate;
             jobSiteMap.planes[i].bearing = bearing;
+            jobSiteMap.fitViewportToMapItems();
             return;
         }
-        jobSiteMap.addPlane(msg);
+        jobSiteMap.addPlane(machineName, 0, loc);
     }
 }
