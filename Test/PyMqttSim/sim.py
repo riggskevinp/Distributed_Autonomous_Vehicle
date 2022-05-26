@@ -18,15 +18,19 @@ org = "Organization"
 site = "JobSite"
 session = "Session"
 
-startLat = 42.56
-startLon = -90.68
+startLat = 42.567680
+startLon = -90.688962
 
 numberOfMachines = 3
 machineNames = [f"mach{x}" for x in range(numberOfMachines)]
-machineLocations = [machine_pb2.GnssLocation() for x in range(numberOfMachines)]
-for i, loc in enumerate(machineLocations):
-    loc.latitude = startLat + i * 0.01
-    loc.longitude = startLon + i * 0.01
+machineInfo = [machine_pb2.VehicleInfo() for x in range(numberOfMachines)]
+for i, veh in enumerate(machineInfo):
+    veh.location.latitude = startLat + i * 0.001
+    veh.location.longitude = startLon + i * 0.001
+    if i % 2:
+        veh.model.model_name = "truck"
+    else:
+        veh.model.model_name = "airplane"
 
 client = mqtt.Client()
 client.on_connect = on_connect
@@ -46,23 +50,23 @@ i = 0
 while True:
     time.sleep(0.5)
 
-    for machName, loc in zip(machineNames, machineLocations):
+    for machName, veh in zip(machineNames, machineInfo):
 
         if i < steps:
-            loc.latitude += 0.0001
-            loc.longitude += 0.0001
+            veh.location.latitude += 0.0001
+            veh.location.longitude += 0.0001
         elif i < steps*2:
-            loc.latitude -= 0.0001
-            loc.longitude += 0.0001
+            veh.location.latitude -= 0.0001
+            veh.location.longitude += 0.0001
         elif i < steps*3:
-            loc.latitude -= 0.0001
-            loc.longitude -= 0.0001
+            veh.location.latitude -= 0.0001
+            veh.location.longitude -= 0.0001
         elif i < steps*4:
-            loc.latitude += 0.0001
-            loc.longitude -= 0.0001
+            veh.location.latitude += 0.0001
+            veh.location.longitude -= 0.0001
         else:
             i = 0
-        payload = loc.SerializeToString()
+        payload = veh.SerializeToString()
         print(i)
         client.publish(f"{org}/{site}/{session}/{machName}", payload)
     i += 1

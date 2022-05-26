@@ -6,6 +6,7 @@ MapQuickItem {
     id: plane
     property string pilotName: "";
     property int bearing: 0;
+    property string vehPlatform: "airplane";
 
     anchorPoint.x: image.width/2
     anchorPoint.y: image.height/2
@@ -31,7 +32,7 @@ MapQuickItem {
             Image {
                 id: image
                 rotation: bearing
-                source: "/images/airplane.png"
+                source: "/images/"+ plane.vehPlatform + ".png"
             }
             Rectangle {
                 id: bubble

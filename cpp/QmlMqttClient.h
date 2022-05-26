@@ -21,7 +21,7 @@ public:
 
 Q_SIGNALS:
     void topicChanged(QString);
-    void messageReceived(const QString &msg, const QGeoCoordinate& location);
+    void messageReceived(const QString &name, const QGeoCoordinate& location, const QString &model);
 
 public slots:
     void handleMessage(const QMqttMessage &qmsg);

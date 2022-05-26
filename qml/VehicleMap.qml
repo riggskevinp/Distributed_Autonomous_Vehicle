@@ -18,6 +18,8 @@ Map {
     gesture.enabled: true
     property var  planes: []
     property bool ready: false
+    property bool followSelf: true
+    property bool syncBearing: false
 
     plugin: Plugin {
         name: "osm" // "mapboxgl", "esri", ...
@@ -33,16 +35,40 @@ Map {
 
     Behavior on center {
         CoordinateAnimation {
-            duration: 150
-            easing.type: Easing.InOutQuad
+            duration: 500
+            easing.type: Easing.Linear
         }
     }
 
     Behavior on bearing {
         RotationAnimation {
             direction: RotationAnimation.Shortest
-            duration: 150
+            duration: 500
             easing.type: Easing.Linear
+        }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        onDoubleClicked:{
+            if(!jobSiteMap.followSelf){
+                jobSiteMap.followSelf = true;
+            } else {
+                jobSiteMap.followSelf = false;
+            }
+        }
+    }
+
+    gesture.onPinchFinished: {
+        // Round piched zoom level to avoid fuzziness.
+        if (jobSiteMap.zoomLevel < jobSiteMap.zoomLevelPrev) {
+            jobSiteMap.zoomLevel % 1 < 0.75 ?
+                jobSiteMap.setZoomLevel(Math.floor(jobSiteMap.zoomLevel)):
+                jobSiteMap.setZoomLevel(Math.ceil(jobSiteMap.zoomLevel));
+        } else if (jobSiteMap.zoomLevel > jobSiteMap.zoomLevelPrev) {
+            jobSiteMap.zoomLevel % 1 > 0.25 ?
+                jobSiteMap.setZoomLevel(Math.ceil(jobSiteMap.zoomLevel)):
+                jobSiteMap.setZoomLevel(Math.floor(jobSiteMap.zoomLevel));
         }
     }
 
@@ -66,7 +92,7 @@ Map {
         jobSiteMap.ready = true;
     }
 
-    function addPlane(name, bearing, coord) {
+    function addPlane(name, bearing, coord, model) {
         var planeComponent = Qt.createComponent("Vehicle.qml");
         if( planeComponent.status !== Component.Ready ){
             if( planeComponent.status === Component.Error )
@@ -76,15 +102,16 @@ Map {
         var plane = planeComponent.createObject(jobSiteMap);
 
         plane.pilotName = name;
-        plane.bearing = bearing || 0;
+        plane.bearing = (bearing || 0) - jobSiteMap.bearing;
         plane.coordinate = coord;
+        plane.vehPlatform = model
 
         jobSiteMap.planes.push(plane);
         jobSiteMap.addMapItem(plane);
         jobSiteMap.fitViewportToMapItems();
     }
 
-    function updatePlane(machineName, loc){
+    function updatePlane(machineName, loc, machineModel){
         for(var i = 0; i < jobSiteMap.planes.length; i++){
             if(jobSiteMap.planes[i].pilotName !== machineName){
                 continue;
@@ -92,11 +119,19 @@ Map {
             var coordinate = loc;
             var bearing = loc.bearing || jobSiteMap.planes[i].coordinate.azimuthTo(coordinate);
 
+            if(machineName === "mach0" && jobSiteMap.followSelf === true){
+                jobSiteMap.center = coordinate;
+                if(jobSiteMap.syncBearing){
+                    jobSiteMap.bearing = bearing;
+                }
+            }
+
             jobSiteMap.planes[i].coordinate = coordinate;
-            jobSiteMap.planes[i].bearing = bearing;
-            jobSiteMap.fitViewportToMapItems();
+            jobSiteMap.planes[i].bearing = bearing - jobSiteMap.bearing;
+
+
             return;
         }
-        jobSiteMap.addPlane(machineName, 0, loc);
+        jobSiteMap.addPlane(machineName, 0, loc, machineModel);
     }
 }

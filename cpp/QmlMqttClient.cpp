@@ -30,9 +30,10 @@ void QmlMqttSubscription::handleMessage(const QMqttMessage &qmsg)
     auto topic = qmsg.topic().levels();
     if(topic.length() >= 4){
         auto machineName = topic.at(3);
-        auto loc = GnssLocation();
-        loc.ParseFromArray(qmsg.payload(), qmsg.payload().size());
-        emit messageReceived(machineName, QGeoCoordinate(loc.latitude(), loc.longitude()));
+        //auto loc = GnssLocation();
+        auto vehicleInfo = VehicleInfo();
+        vehicleInfo.ParseFromArray(qmsg.payload(), qmsg.payload().size());
+        emit messageReceived(machineName, QGeoCoordinate(vehicleInfo.location().latitude(), vehicleInfo.location().longitude()), QString::fromStdString(vehicleInfo.model().model_name()));
     }
 }
 
